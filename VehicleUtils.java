@@ -1,7 +1,20 @@
 package main.java;
 
 public class VehicleUtils {
-    public static double getAverageModelPrice(VehicleInterface vehicle) {
+    private static TransportFactory factory = new AutoFactory();
+
+    public static void setTransportFactory(TransportFactory transportFactory) {
+        if (transportFactory == null) {
+            throw new IllegalArgumentException("Factory must not be null");
+        }
+        factory = transportFactory;
+    }
+
+    public static Transport createInstance(String name, int size) throws VehicleException {
+        return factory.createInstance(name, size);
+    }
+
+    public static double getAverageModelPrice(Transport vehicle) {
         float[] prices = vehicle.getAllModelPrices();
         if (prices.length == 0) return 0.0;
 
@@ -12,7 +25,7 @@ public class VehicleUtils {
         return sum / prices.length;
     }
 
-    public static void printAllModels(VehicleInterface vehicle) {
+    public static void printAllModels(Transport vehicle) {
         String[] models = vehicle.getAllModelNames();
         System.out.println("Модели транспортного средства '" + vehicle.getBrand() + "':");
         for (int i = 0; i < models.length; i++) {
@@ -20,7 +33,7 @@ public class VehicleUtils {
         }
     }
 
-    public static void printAllPrices(VehicleInterface vehicle) {
+    public static void printAllPrices(Transport vehicle) {
         float[] prices = vehicle.getAllModelPrices();
         String[] models = vehicle.getAllModelNames();
 

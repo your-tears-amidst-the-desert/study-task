@@ -4,10 +4,10 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Car implements VehicleInterface{
+public class Car implements VehicleInterface, Cloneable{
     private String brand;
     private Model[] models;
-    private final Set<String> allModelNames = new HashSet<>();
+    private Set<String> allModelNames = new HashSet<>();
 
     @Override
     public String getBrand() {
@@ -41,6 +41,7 @@ public class Car implements VehicleInterface{
         }
 
         public void setModelName(String modelName) throws VehicleException {
+            if (modelName == null || modelName.isEmpty()) throw new NoSuchModelNameException();
             if (allModelNames.contains(modelName)) throw new DuplicateModelNameException();
             this.modelName = modelName;
         }
@@ -194,6 +195,10 @@ public class Car implements VehicleInterface{
 
     @Override
     public void removeModel(String modelName) throws VehicleException {
+        if (modelName == null || modelName.isEmpty()) {
+            throw new NoSuchModelNameException();
+        }
+
         int removeIndex = -1;
 
         for (int i = 0; i < models.length; i++) {
@@ -204,7 +209,7 @@ public class Car implements VehicleInterface{
         }
 
         if (removeIndex != -1) {
-            Model[] newModels = new Model[models.length - 1];
+            Model[] newModels = Arrays.copyOf(models, models.length - 1);
             System.arraycopy(models, 0, newModels, 0, removeIndex);
             System.arraycopy(models, removeIndex + 1, newModels, removeIndex, models.length - removeIndex - 1);
             models = newModels;
@@ -218,5 +223,25 @@ public class Car implements VehicleInterface{
     @Override
     public int getModelCount() {
         return models.length;
+    }
+
+    @Override
+    public Car clone() throws CloneNotSupportedException {
+        Car clonedCar = (Car) super.clone();
+        clonedCar.allModelNames = new HashSet<>();
+        clonedCar.models = new Model[this.models.length];
+
+        for (int i = 0; i < this.models.length; i++) {
+            Model sourceModel = this.models[i];
+            try {
+                Model clonedModel = clonedCar.new Model(sourceModel.modelName, sourceModel.modelPrice);
+                clonedCar.models[i] = clonedModel;
+                clonedCar.allModelNames.add(clonedModel.modelName);
+            } catch (VehicleException e) {
+                throw new CloneNotSupportedException("Не удалось клонировать модель: " + e.getMessage());
+            }
+        }
+
+        return clonedCar;
     }
 }
