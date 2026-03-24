@@ -1,15 +1,37 @@
 package main.java;
 
-import java.util.Date;
-
-public class Motorcycle implements VehicleInterface{
+public class Motorcycle implements VehicleInterface {
     private String brand;
-    private Model head = null;
-    private Date lastModified;
+    private final Model head = new Model();
     {
-        lastModified = new Date();
+        head.prev = head;
+        head.next = head;
     }
     private int size = 0;
+
+    private class Model {
+        private String modelName = null;
+        private float modelPrice = Float.NaN;
+        private Model prev = null;
+        private Model next = null;
+
+        Model() {
+        }
+
+        Model(String modelName, float modelPrice) throws VehicleException {
+            if (modelName == null || modelName.isEmpty()) throw new NoSuchModelNameException();
+            if (modelPrice < 0.0 || modelPrice > Float.MAX_VALUE) throw new ModelPriceOutOfBoundsException(modelPrice);
+            this.modelName = modelName;
+            this.modelPrice = modelPrice;
+        }
+    }
+
+    public Motorcycle(String brand, int numOfModels) throws VehicleException {
+        this.brand = brand;
+        for (int i = 0; i < numOfModels; i++) {
+            addModel("Модель №" + (i + 1), (float) (150000 + Math.floor(Math.random() * 1000000)));
+        }
+    }
 
     @Override
     public String getBrand() {
@@ -21,185 +43,99 @@ public class Motorcycle implements VehicleInterface{
         this.brand = brand;
     }
 
-    private class Model {
-        private String modelName;
-        private float modelPrice;
-        private Model prev = null;
-        private Model next = null;
-
-        Model(String modelName, float modelPrice) throws VehicleException {
-            if (modelName == null || modelName.isEmpty()) throw new NoSuchModelNameException();
-            if (modelPrice < 0.0 || modelPrice > Float.MAX_VALUE) throw new ModelPriceOutOfBoundsException();
-
-            if (head != null) {
-                Model m = head;
-                do {
-                    if (m.getModelName().equals(modelName)) throw new DuplicateModelNameException();
-                    m = m.next;
-                } while(m != head);
-            }
-
-            this.modelName = modelName;
-            this.modelPrice = modelPrice;
-            updateLastModified();
-        }
-
-        String getModelName() {
-            return this.modelName;
-        }
-
-        void setModelName(String modelName) throws VehicleException {
-            if (modelName == null || modelName.isEmpty()) throw new NoSuchModelNameException();
-
-            if (head != null) {
-                Model cur = head;
-                do {
-                    if (cur != this && cur.getModelName().equals(modelName)) {
-                        throw new DuplicateModelNameException();
-                    }
-                    cur = cur.next;
-                } while(cur != head);
-            }
-
-            this.modelName = modelName;
-            updateLastModified();
-        }
-
-        float getModelPrice() {
-            return this.modelPrice;
-        }
-
-        void setModelPrice(float modelPrice) throws VehicleError {
-            if (modelPrice < 0.0 || modelPrice > Float.MAX_VALUE) throw new ModelPriceOutOfBoundsException();
-            this.modelPrice = modelPrice;
-            updateLastModified();
-        }
-    }
-
-    public Motorcycle(String brand, int numOfModels) throws VehicleError, VehicleException {
-        this.brand = brand;
-
-        for (int i = 0; i < numOfModels; i++) {
-            String modelName = "Модель №" + (i + 1);
-            float modelPrice = (float) (150000 + Math.floor(Math.random() * 1000000));
-            this.addModel(modelName, modelPrice);
-        }
-    }
-    private void updateLastModified() {
-        this.lastModified = new Date();
-    }
-
-    public Date getLastModified() {
-        return lastModified;
-    }
-
-    @Override
-    public void addModel(String modelName, float modelPrice) throws VehicleError, VehicleException {
-        Model newModel = new Model(modelName, modelPrice);
-        if (head == null) {
-            head = newModel;
-            head.next = head;
-            head.prev = head;
-        } else {
-            Model last = head.prev;
-            newModel.next = head;
-            newModel.prev = last;
-            head.prev = newModel;
-            last.next = newModel;
-        }
-
-        updateLastModified();
-        size++;
-    }
-
-    private Model findModelByName(String modelName) throws VehicleException {
-        if (head == null) throw new NoSuchModelNameException(modelName);
-
-        Model current = head;
-        do {
-            if (current.getModelName().equals(modelName)) {
-                return current;
-            }
-            current = current.next;
-        } while (current != head);
-
-        throw new NoSuchModelNameException(modelName);
-    }
-
-    @Override
-    public void removeModel(String modelName) throws VehicleException {
-        if (head == null) throw new NoSuchModelNameException(modelName);
-
-        Model toRemove = findModelByName(modelName);
-
-        if (size == 1) {
-            head = null;
-        } else {
-            toRemove.prev.next = toRemove.next;
-            toRemove.next.prev = toRemove.prev;
-            if (toRemove == head) {
-                head = head.next;
-            }
-        }
-
-        size--;
-        updateLastModified();
-    }
-
     @Override
     public String[] getAllModelNames() {
-        if (head == null) return new String[0];
-
         String[] names = new String[size];
-        Model current = head;
+        Model current = head.next;
         for (int i = 0; i < size; i++) {
-            names[i] = current.getModelName();
+            names[i] = current.modelName;
             current = current.next;
         }
         return names;
     }
 
     @Override
-    public float getModelPrice(String modelName) throws VehicleException {
-        Model model = findModelByName(modelName);
-        return model.getModelPrice();
-    }
-
-    @Override
-    public void updateModelPrice(String modelName, float newPrice) throws VehicleException {
-        Model model = findModelByName(modelName);
-        model.setModelPrice(newPrice);
-    }
-
-    @Override
     public float[] getAllModelPrices() {
-        if (head == null) return new float[0];
-
         float[] prices = new float[size];
-        Model current = head;
+        Model current = head.next;
         for (int i = 0; i < size; i++) {
-            prices[i] = current.getModelPrice();
+            prices[i] = current.modelPrice;
             current = current.next;
         }
         return prices;
     }
 
     @Override
+    public float getModelPrice(String modelName) throws VehicleException {
+        return findModelByName(modelName).modelPrice;
+    }
+
+    @Override
+    public void updateModelPrice(String modelName, float newPrice) throws VehicleException {
+        if (newPrice < 0.0 || newPrice > Float.MAX_VALUE) {
+            throw new ModelPriceOutOfBoundsException(newPrice);
+        }
+        findModelByName(modelName).modelPrice = newPrice;
+    }
+
+    @Override
+    public void addModel(String modelName, float modelPrice) throws VehicleException {
+        if (containsModelName(modelName)) {
+            throw new DuplicateModelNameException(modelName);
+        }
+
+        Model newModel = new Model(modelName, modelPrice);
+        Model last = head.prev;
+        newModel.next = head;
+        newModel.prev = last;
+        last.next = newModel;
+        head.prev = newModel;
+        size++;
+    }
+
+    @Override
     public void updateModelName(String oldName, String newName) throws VehicleException {
-        if (oldName == null || newName == null || oldName.isEmpty() || newName.isEmpty()) {
-            throw new NoSuchModelNameException();
-        }
+        if (newName == null || newName.isEmpty()) throw new NoSuchModelNameException();
+        if (oldName.equals(newName)) return;
+        if (containsModelName(newName)) throw new DuplicateModelNameException(newName);
+        findModelByName(oldName).modelName = newName;
+    }
 
-        if (oldName.equals(newName)) {
-            return;
-        }
-
-        Model model = findModelByName(oldName);
-        model.setModelName(newName);
+    @Override
+    public void removeModel(String modelName) throws VehicleException {
+        Model toRemove = findModelByName(modelName);
+        toRemove.prev.next = toRemove.next;
+        toRemove.next.prev = toRemove.prev;
+        size--;
     }
 
     @Override
     public int getModelCount() {
         return size;
+    }
+
+    private boolean containsModelName(String modelName) {
+        if (modelName == null || modelName.isEmpty()) return false;
+        Model current = head.next;
+        while (current != head) {
+            if (current.modelName.equals(modelName)) {
+                return true;
+            }
+            current = current.next;
+        }
+        return false;
+    }
+
+    private Model findModelByName(String modelName) throws NoSuchModelNameException {
+        if (modelName == null || modelName.isEmpty()) throw new NoSuchModelNameException();
+
+        Model current = head.next;
+        while (current != head) {
+            if (current.modelName.equals(modelName)) {
+                return current;
+            }
+            current = current.next;
+        }
+        throw new NoSuchModelNameException(modelName);
     }
 }
