@@ -1,8 +1,8 @@
 package main.java;
 
-public class Motorcycle implements VehicleInterface {
+public class Motorcycle implements VehicleInterface, Cloneable {
     private String brand;
-    private final Model head = new Model();
+    private Model head = new Model();
     {
         head.prev = head;
         head.next = head;
@@ -137,5 +137,26 @@ public class Motorcycle implements VehicleInterface {
             current = current.next;
         }
         throw new NoSuchModelNameException(modelName);
+    }
+
+    @Override
+    public Motorcycle clone() throws CloneNotSupportedException {
+        Motorcycle clonedMotorcycle = (Motorcycle) super.clone();
+        clonedMotorcycle.head = clonedMotorcycle.new Model();
+        clonedMotorcycle.head.prev = clonedMotorcycle.head;
+        clonedMotorcycle.head.next = clonedMotorcycle.head;
+        clonedMotorcycle.size = 0;
+
+        Model current = this.head.next;
+        while (current != this.head) {
+            try {
+                clonedMotorcycle.addModel(current.modelName, current.modelPrice);
+            } catch (VehicleException e) {
+                throw new CloneNotSupportedException("Не удалось клонировать модель: " + e.getMessage());
+            }
+            current = current.next;
+        }
+
+        return clonedMotorcycle;
     }
 }

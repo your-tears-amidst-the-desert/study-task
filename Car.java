@@ -4,10 +4,10 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Car implements VehicleInterface{
+public class Car implements VehicleInterface, Cloneable{
     private String brand;
     private Model[] models;
-    private final Set<String> allModelNames = new HashSet<>();
+    private Set<String> allModelNames = new HashSet<>();
 
     @Override
     public String getBrand() {
@@ -223,5 +223,25 @@ public class Car implements VehicleInterface{
     @Override
     public int getModelCount() {
         return models.length;
+    }
+
+    @Override
+    public Car clone() throws CloneNotSupportedException {
+        Car clonedCar = (Car) super.clone();
+        clonedCar.allModelNames = new HashSet<>();
+        clonedCar.models = new Model[this.models.length];
+
+        for (int i = 0; i < this.models.length; i++) {
+            Model sourceModel = this.models[i];
+            try {
+                Model clonedModel = clonedCar.new Model(sourceModel.modelName, sourceModel.modelPrice);
+                clonedCar.models[i] = clonedModel;
+                clonedCar.allModelNames.add(clonedModel.modelName);
+            } catch (VehicleException e) {
+                throw new CloneNotSupportedException("Не удалось клонировать модель: " + e.getMessage());
+            }
+        }
+
+        return clonedCar;
     }
 }
