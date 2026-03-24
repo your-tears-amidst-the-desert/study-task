@@ -41,6 +41,7 @@ public class Car implements VehicleInterface{
         }
 
         public void setModelName(String modelName) throws VehicleException {
+            if (modelName == null || modelName.isEmpty()) throw new NoSuchModelNameException();
             if (allModelNames.contains(modelName)) throw new DuplicateModelNameException();
             this.modelName = modelName;
         }
@@ -194,6 +195,10 @@ public class Car implements VehicleInterface{
 
     @Override
     public void removeModel(String modelName) throws VehicleException {
+        if (modelName == null || modelName.isEmpty()) {
+            throw new NoSuchModelNameException();
+        }
+
         int removeIndex = -1;
 
         for (int i = 0; i < models.length; i++) {
@@ -204,7 +209,7 @@ public class Car implements VehicleInterface{
         }
 
         if (removeIndex != -1) {
-            Model[] newModels = new Model[models.length - 1];
+            Model[] newModels = Arrays.copyOf(models, models.length - 1);
             System.arraycopy(models, 0, newModels, 0, removeIndex);
             System.arraycopy(models, removeIndex + 1, newModels, removeIndex, models.length - removeIndex - 1);
             models = newModels;
